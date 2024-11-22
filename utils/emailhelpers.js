@@ -11,14 +11,14 @@ export const sendMail = async ({ email, name }) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: "sushan7070@gmail.com", // Replace with your email
-        pass: "hfqt mixl bjtx bunw", // Replace with your app password
+        user: "your-email@gmail.com", // Replace with your email
+        pass: "your-app-password", // Replace with your app password
       },
     });
 
     // Define email options
     const mailOptions = {
-      from: "email", // Replace with your email
+      from: "your-email@gmail.com", // Replace with your email
       to: email,
       subject: "Welcome to Our Platform!",
       html: `
