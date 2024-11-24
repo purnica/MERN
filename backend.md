@@ -850,26 +850,202 @@ export const sendMail = async ({ email, name }) => {
 };
 ```
 
-### **Imports Explanation**
 
-```javascript
-import nodemailer from "nodemailer";
+
+---
+
+#### 10 **Aggregation Stages**
+
+1. **`$match`:**  
+   Filters documents that match a condition.
+   - **Example:**  
+     Find products where the `price` is greater than 5:
+     ```javascript
+     {
+       $match: {
+         price: {
+           $gt: 5;
+         }
+       }
+     }
+     ```
+     Filters out products with `price <= 5`.
+
+---
+
+2. **`$sort`:**  
+   Orders documents based on a field.
+   - **Example:**  
+     Sort products by `price` in ascending order:
+     ```javascript
+     {
+       $sort: {
+         price: 1;
+       }
+     }
+     ```
+     Orders products from the lowest to the highest price.
+
+---
+
+3. **`$skip`:**  
+   Skips the specified number of documents.
+   - **Example:**  
+     Skip the first 2 products:
+     ```javascript
+     {
+       $skip: 2;
+     }
+     ```
+     Skips the first 2 documents in the pipeline.
+
+---
+
+4. **`$limit`:**  
+   Restricts the number of documents in the output.
+   - **Example:**  
+     Limit the output to 3 products:
+     ```javascript
+     {
+       $limit: 3;
+     }
+     ```
+     Returns only the first 3 documents after previous stages.
+
+---
+
+5. **`$group`:**  
+   Groups documents by a field and performs calculations like sums or averages.
+   - **Example:**  
+     Group products by `price` and calculate the total `quantity` and the count of products:
+     ```javascript
+     {
+       $group: {
+         _id: "$price", // Group by price
+         totalQuantity: { $sum: "$quantity" }, // Total quantity
+         count: { $sum: 1 } // Count of products with the same price
+       }
+     }
+     ```
+     This groups products by their `price`, sums up the `quantity`, and counts the number of products for each price.
+
+---
+
+### **Aggregation Operators**
+
+1. **`$eq`:**  
+   Matches documents where a field equals a specified value.
+
+   - **Example:**  
+     Find products with a `price` of exactly 10:
+     ```javascript
+     {
+       $match: {
+         price: {
+           $eq: 10;
+         }
+       }
+     }
+     ```
+
+2. **`$ne`:**  
+   Matches documents where a field does **not** equal a specified value.
+
+   - **Example:**  
+     Find products with a `quantity` not equal to 5:
+     ```javascript
+     {
+       $match: {
+         quantity: {
+           $ne: 5;
+         }
+       }
+     }
+     ```
+
+3. **`$or`:**  
+   Matches documents that satisfy at least one condition.
+
+   - **Example:**  
+     Find products with `price > 100` or `quantity < 10`:
+     ```javascript
+     {
+       $match: {
+         $or: [{ price: { $gt: 1000 } }, { quantity: { $lt: 10 } }];
+       }
+     }
+     ```
+
+4. **`$and`:**  
+   Matches documents that satisfy all conditions.
+   - **Example:**  
+     Find products with `price > 10` and `quantity > 5`:
+     ```javascript
+     {
+       $match: {
+         $and: [{ price: { $gt: 10 } }, { quantity: { $gt: 5 } }];
+       }
+     }
+     ```
+
+---
+
+### **Combining Stages**
+
+Let’s combine these stages to analyze a `products` collection:
+
+#### Sample Data:
+
+```json
+[
+  { "_id": 1, "price": 10, "quantity": 5 },
+  { "_id": 2, "price": 20, "quantity": 2 },
+  { "_id": 3, "price": 10, "quantity": 8 },
+  { "_id": 4, "price": 15, "quantity": 3 },
+  { "_id": 5, "price": 20, "quantity": 7 }
+]
 ```
 
-- **Purpose**: Imports the `nodemailer` package, which is used to send emails from Node.js applications. It handles email .
+#### Aggregation Pipeline:
 
 ```javascript
-import QRCode from "qrcode";
+db.products.aggregate([
+  // Match products with price > 10
+  { $match: { price: { $gt: 10 } } },
+
+  // Group by price, calculate total quantity and product count
+  {
+    $group: {
+      _id: "$price", // Group by price
+      totalQuantity: { $sum: "$quantity" }, // Total quantity for the price
+      count: { $sum: 1 }, // Count of products
+    },
+  },
+
+  // Sort groups by total quantity in descending order
+  { $sort: { totalQuantity: -1 } },
+
+  // Limit to the top 2 groups
+  { $limit: 2 },
+]);
 ```
 
-- **Purpose**: Imports the `qrcode` package, which generates QR codes. It converts text or URLs into QR code images, which can be used for easy access to links.
+#### **Output:**
 
-### Summary
+```json
+[
+  { "_id": 20, "totalQuantity": 9, "count": 2 },
+  { "_id": 15, "totalQuantity": 3, "count": 1 }
+]
+```
 
-- **User Model**: Defines how users are created, hashed passwords, and methods for comparing passwords.
-- **Auth Middleware**: Protects routes by verifying JWT tokens.
-- **Login & Register Routes**: Handles user authentication (registration and login).
-- **Product Routes**: Includes product CRUD routes, some of which are protected by the authentication middleware.
-- **Main Server**: The main app ties everything together.
+---
 
-You can now add further business logic to each route as needed.
+### **Explanation of Pipeline:**
+
+1. **`$match`:** Filters products where `price > 10`.
+2. **`$group`:** Groups documents by `price`, calculates total `quantity` for each price group, and counts the number of products in each group.
+3. **`$sort`:** Orders groups by `totalQuantity` in descending order.
+4. **`$limit`:** Returns only the top 2 groups.
+
+---
