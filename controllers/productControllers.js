@@ -121,6 +121,10 @@ export const getProductList = async (req, res) => {
       {
         $match: {
           title: { $regex: new RegExp(search, "i") },
+          $and: [
+            { price: { $gte: 900, $lte: 2000 } },
+            { quantity: { $gt: 20, $lte: 30 } },
+          ], // ne, lt , lte,
         },
       },
       {
@@ -132,6 +136,17 @@ export const getProductList = async (req, res) => {
         },
       },
       { $set: { category: { $first: "$category" } } },
+
+      {
+        $group: {
+          _id: "$category._id",
+          categoryName: { $first: "$category.name" },
+          products: { $push: "$$ROOT" },
+          totalQuantity: { $sum: "$quantity" },
+          totalPrice: { $sum: "$price" },
+          averagePrice: { $avg: "$price" },
+        },
+      },
 
       { $skip: (page - 1) * Number(limit) },
       { $limit: Number(limit) },
