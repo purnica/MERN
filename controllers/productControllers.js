@@ -131,11 +131,11 @@ export const getProductList = async (req, res) => {
           as: "category",
         },
       },
-      { $set: { category: { $first: "hhcategory" } } },
+      { $set: { category: { $first: "$category" } } },
 
-      { $skip: (page - 1) * limit },
-      { $limit: limit },
-      { $sort: { createdBy: order === "asc" ? 1 : -1 } },
+      { $skip: (page - 1) * Number(limit) },
+      { $limit: Number(limit) },
+      { $sort: { createdAt: order === "asc" ? 1 : -1 } },
     ]);
 
     res.status(200).json(products);
